@@ -9,6 +9,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable
 
+import numpy as np
 from PIL import Image
 
 
@@ -63,31 +64,71 @@ class PaddleOrientationPredictor:
     def __init__(self, model_dir: Path) -> None:
         if not model_dir.exists():
             raise FileNotFoundError(
-                f"Paddle backend selected, but model directory is missing: {model_dir}. "
+                f"ONNX orientation backend selected, but model directory is missing: {model_dir}. "
                 "Add the model artifact with DVC or use --backend mock."
             )
+        self.model_path = model_dir / "PP-LCNet_x1_0_doc_ori_infer.onnx"
+        if not self.model_path.exists():
+            raise FileNotFoundError(
+                f"ONNX model file is missing: {self.model_path}. "
+                "Expected PP-LCNet_x1_0_doc_ori_infer.onnx inside --model-dir."
+            )
         try:
-            from paddleclas import PaddleClas  # type: ignore
+            import onnxruntime as ort
         except ImportError as exc:
             raise RuntimeError(
-                "Paddle backend requires PaddleClas and a compatible Paddle runtime. "
-                "Install those optional dependencies before using --backend paddle."
+                "ONNX orientation backend requires onnxruntime. "
+                "Install requirements/paddle.txt before using --backend paddle."
             ) from exc
 
-        self._classifier = PaddleClas(model_name=str(model_dir), use_gpu=False)
+        self.session = ort.InferenceSession(str(self.model_path), providers=["CPUExecutionProvider"])
+        self.input_name = self.session.get_inputs()[0].name
+        self.labels = VALID_ANGLES
 
     def predict(self, image_path: Path) -> tuple[int, float]:
-        results = list(self._classifier.predict(input_data=str(image_path)))
-        if not results:
-            raise RuntimeError(f"Paddle backend returned no prediction for {image_path}")
+        input_data = self._preprocess(image_path)
+        output = self.session.run(None, {self.input_name: input_data})
+        logits = np.asarray(output[0]).reshape(-1)
+        probabilities = self._softmax(logits)
+        class_id = int(np.argmax(probabilities))
+        if class_id >= len(self.labels):
+            raise ValueError(f"ONNX model returned unsupported class index: {class_id}")
+        return self.labels[class_id], float(probabilities[class_id])
 
-        result = results[0]
-        label = str(result.get("label_names", ["0"])[0])
-        score = float(result.get("scores", [0.0])[0])
-        angle = int(label)
-        if angle not in VALID_ANGLES:
-            raise ValueError(f"Unsupported orientation label from Paddle backend: {angle}")
-        return angle, score
+    @staticmethod
+    def _preprocess(image_path: Path) -> np.ndarray:
+        with Image.open(image_path) as image:
+            image = image.convert("RGB")
+            width, height = image.size
+            if width <= 0 or height <= 0:
+                raise ValueError(f"Invalid image dimensions for {image_path}: {image.size}")
+
+            resize_short = 256
+            if width < height:
+                new_width = resize_short
+                new_height = round(height * resize_short / width)
+            else:
+                new_height = resize_short
+                new_width = round(width * resize_short / height)
+            image = image.resize((new_width, new_height), Image.Resampling.BILINEAR)
+
+            crop_size = 224
+            left = (new_width - crop_size) // 2
+            top = (new_height - crop_size) // 2
+            image = image.crop((left, top, left + crop_size, top + crop_size))
+
+            array = np.asarray(image).astype("float32") / 255.0
+            mean = np.asarray([0.485, 0.456, 0.406], dtype="float32")
+            std = np.asarray([0.229, 0.224, 0.225], dtype="float32")
+            array = (array - mean) / std
+            array = np.transpose(array, (2, 0, 1))
+            return np.expand_dims(array, axis=0).astype("float32")
+
+    @staticmethod
+    def _softmax(logits: np.ndarray) -> np.ndarray:
+        shifted = logits - np.max(logits)
+        exp = np.exp(shifted)
+        return exp / np.sum(exp)
 
 
 def rotate_to_upright(image_path: Path, output_path: Path, predicted_angle: int) -> None:

@@ -1,6 +1,3 @@
-# Optional production Paddle orientation backend.
-# Install a Paddle runtime appropriate for your platform if this generic
-# package does not match your hardware/OS.
+# Optional production orientation backend for the PP-LCNet ONNX model.
 -r base.txt
-paddlepaddle
-paddleclas
+onnxruntime>=1.18

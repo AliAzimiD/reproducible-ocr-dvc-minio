@@ -4,9 +4,10 @@ import csv
 import json
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
-from src.stages.orient_and_rotate import mock_predict, orient_all, rotate_to_upright
+from src.stages.orient_and_rotate import PaddleOrientationPredictor, mock_predict, orient_all, rotate_to_upright
 
 
 def test_rotate_to_upright_preserves_and_swaps_dimensions(tmp_path: Path) -> None:
@@ -35,6 +36,19 @@ def test_mock_predict_is_deterministic(tmp_path: Path) -> None:
 
     assert mock_predict(image_path) == mock_predict(image_path)
     assert mock_predict(image_path)[0] in {0, 90, 180, 270}
+
+
+def test_onnx_preprocess_shape_and_softmax(tmp_path: Path) -> None:
+    image_path = tmp_path / "source.png"
+    Image.new("RGB", (320, 180), "white").save(image_path)
+
+    input_data = PaddleOrientationPredictor._preprocess(image_path)
+    probabilities = PaddleOrientationPredictor._softmax(np.asarray([0.0, 1.0, 2.0, 3.0], dtype="float32"))
+
+    assert input_data.shape == (1, 3, 224, 224)
+    assert input_data.dtype == np.float32
+    assert np.isclose(probabilities.sum(), 1.0)
+    assert int(np.argmax(probabilities)) == 3
 
 
 def test_orient_all_writes_manifest_and_predictions(tmp_path: Path) -> None:

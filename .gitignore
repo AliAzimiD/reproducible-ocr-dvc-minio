@@ -5,6 +5,7 @@ __pycache__/
 .ruff_cache/
 .env
 .DS_Store
+*.log
 
 # DVC outputs and local cache. DVC metadata remains tracked.
 /data/interim/

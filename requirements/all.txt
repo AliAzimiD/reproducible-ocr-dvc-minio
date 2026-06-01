@@ -1,4 +1,4 @@
-# Everything needed for preprocessing, tests, training, and Paddle inference.
+# Everything needed for preprocessing, tests, training, and ONNX orientation inference.
 -r dev.txt
 -r train.txt
 -r paddle.txt

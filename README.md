@@ -2,7 +2,7 @@
 
 This project is a reproducible preprocessing pipeline for OCR workflows. It extracts page images from mixed raw document inputs, predicts document orientation, rotates images upright, and versions datasets/artifacts with DVC.
 
-The default pipeline uses a deterministic `mock` orientation backend so the repository can run immediately. For production use, add the Paddle orientation model with DVC under `models/doc_ori/PP-LCNet_x1_0_doc_ori` and switch `params.yaml` to `orientation.backend: paddle`.
+The default pipeline uses a deterministic `mock` orientation backend so the repository can run immediately. For production use, add the PP-LCNet ONNX orientation model with DVC under `models/doc_ori/PP-LCNet_x1_0_doc_ori` and switch `params.yaml` to `orientation.backend: paddle`.
 
 ## Project Layout
 
@@ -36,7 +36,7 @@ Requirement files are nested by use case:
 - `requirements/base.txt`: preprocessing and DVC only
 - `requirements/dev.txt`: tests
 - `requirements/train.txt`: EfficientNet orientation training
-- `requirements/paddle.txt`: Paddle orientation backend
+- `requirements/paddle.txt`: ONNX Runtime orientation backend
 - `requirements/all.txt`: all optional stacks
 
 Start local MinIO when you want remote DVC storage:
@@ -77,6 +77,22 @@ Outputs:
 - `data/interim/orientation/manifest.jsonl`
 - `data/interim/orientation/preds.csv`
 
+## Manual Upright Review UI
+
+Launch a local UI to review extracted images and save corrected upright copies:
+
+```powershell
+python src/tools/review_upright_ui.py --input data/interim/images_flat --output data/interim/images_flat_corrected_upright
+```
+
+For model-assisted review, pass the ONNX model directory:
+
+```powershell
+python src/tools/review_upright_ui.py --input data/interim/images_flat --output data/interim/images_flat_corrected_upright --model-dir models/doc_ori/PP-LCNet_x1_0_doc_ori
+```
+
+Reviewed images are saved to `data/interim/images_flat_corrected_upright`. The tool also writes `review_manifest.jsonl` and `review_state.json` so review sessions can be resumed.
+
 ## Add Real Data and Model Artifacts
 
 Place raw inputs in `data/raw/mixed`, then version them:
@@ -87,7 +103,7 @@ git add data/raw/mixed.dvc data/raw/.gitignore
 dvc push
 ```
 
-Place the Paddle model at `models/doc_ori/PP-LCNet_x1_0_doc_ori`, then version it:
+Place the PP-LCNet ONNX model at `models/doc_ori/PP-LCNet_x1_0_doc_ori`, then version it:
 
 ```powershell
 dvc add models/doc_ori/PP-LCNet_x1_0_doc_ori
@@ -102,7 +118,7 @@ orientation:
   backend: paddle
 ```
 
-The Paddle backend expects PaddleClas and a compatible Paddle runtime:
+The production orientation backend expects `PP-LCNet_x1_0_doc_ori_infer.onnx` in the model directory and ONNX Runtime installed:
 
 ```powershell
 pip install -r requirements/paddle.txt

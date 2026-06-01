@@ -9,7 +9,7 @@ orientation:
   backend: mock
 
 train_orientation:
-  mode: skip
+  mode: train
   source_dir: data/raw/orientation_eval/sources
   output: models/doc_ori/deep_orientation
   pretrained_checkpoint: models/doc_ori/deep_image_orientation_detection/orientation_model_v2_0.9882.pth
@@ -24,4 +24,4 @@ train_orientation:
   val_fraction: 0.2
   seed: 42
   num_blocks_to_unfreeze: 2
-  pretrained: true
+  pretrained: false
