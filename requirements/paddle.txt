@@ -1,0 +1,6 @@
+# Optional production Paddle orientation backend.
+# Install a Paddle runtime appropriate for your platform if this generic
+# package does not match your hardware/OS.
+-r base.txt
+paddlepaddle
+paddleclas

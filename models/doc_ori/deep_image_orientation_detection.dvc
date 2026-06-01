@@ -1,0 +1,6 @@
+outs:
+- md5: bb12a0847aa5d8dc1b62096221310273.dir
+  size: 81645683
+  nfiles: 1
+  hash: md5
+  path: deep_image_orientation_detection

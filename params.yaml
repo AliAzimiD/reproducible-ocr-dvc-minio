@@ -1,0 +1,27 @@
+extract:
+  input: data/raw/mixed
+  output: data/interim/images_flat
+
+orientation:
+  input: data/interim/images_flat
+  output: data/interim/orientation
+  model_dir: models/doc_ori/PP-LCNet_x1_0_doc_ori
+  backend: mock
+
+train_orientation:
+  mode: skip
+  source_dir: data/raw/orientation_eval/sources
+  output: models/doc_ori/deep_orientation
+  pretrained_checkpoint: models/doc_ori/deep_image_orientation_detection/orientation_model_v2_0.9882.pth
+  epochs: 5
+  batch_size: 16
+  learning_rate: 0.0001
+  min_learning_rate: 0.000001
+  weight_decay: 0.001
+  label_smoothing: 0.1
+  image_size: 384
+  workers: 0
+  val_fraction: 0.2
+  seed: 42
+  num_blocks_to_unfreeze: 2
+  pretrained: true

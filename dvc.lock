@@ -1,0 +1,100 @@
+schema: '2.0'
+stages:
+  extract_images:
+    cmd: python src/stages/extract_images.py --input data/raw/mixed --output 
+      data/interim/images_flat
+    deps:
+    - path: data/raw/mixed
+      hash: md5
+      md5: 7d9e567a4b0569de1e6c7a8e85f96c1d.dir
+      size: 1466
+      nfiles: 1
+    - path: src/stages/extract_images.py
+      hash: md5
+      md5: 7591ea432ca12dacd6ffc0306cafa407
+      size: 5550
+    params:
+      params.yaml:
+        extract.input: data/raw/mixed
+        extract.output: data/interim/images_flat
+    outs:
+    - path: data/interim/images_flat
+      hash: md5
+      md5: f84b68d372b5167958d83496d9cc36d8.dir
+      size: 1783
+      nfiles: 2
+  orient_and_rotate:
+    cmd: python src/stages/orient_and_rotate.py --input data/interim/images_flat
+      --output data/interim/orientation --model-dir 
+      models/doc_ori/PP-LCNet_x1_0_doc_ori --backend mock
+    deps:
+    - path: data/interim/images_flat
+      hash: md5
+      md5: f84b68d372b5167958d83496d9cc36d8.dir
+      size: 1783
+      nfiles: 2
+    - path: src/stages/orient_and_rotate.py
+      hash: md5
+      md5: 4e3f4ce08609d0c7f915f8132de81bcd
+      size: 6284
+    params:
+      params.yaml:
+        orientation.backend: mock
+        orientation.input: data/interim/images_flat
+        orientation.model_dir: models/doc_ori/PP-LCNet_x1_0_doc_ori
+        orientation.output: data/interim/orientation
+    outs:
+    - path: data/interim/orientation
+      hash: md5
+      md5: c58a17de429f49cde3debd0e8d19c3eb.dir
+      size: 1844
+      nfiles: 3
+  train_orientation_model:
+    cmd: python src/stages/train_orientation_model.py --mode skip --source-dir 
+      data/raw/orientation_eval/sources --output models/doc_ori/deep_orientation
+      --pretrained-checkpoint 
+      models/doc_ori/deep_image_orientation_detection/orientation_model_v2_0.9882.pth
+      --epochs 5 --batch-size 16 --learning-rate 0.0001 --min-learning-rate 
+      1e-06 --weight-decay 0.001 --label-smoothing 0.1 --image-size 384 
+      --workers 0 --val-fraction 0.2 --seed 42 --num-blocks-to-unfreeze 2 
+      --pretrained true --allow-missing-torch
+    deps:
+    - path: data/raw/orientation_eval/sources
+      hash: md5
+      md5: 234cd8c72649b784b75f04d636e83000.dir
+      size: 240792838
+      nfiles: 1090
+    - path: 
+        models/doc_ori/deep_image_orientation_detection/orientation_model_v2_0.9882.pth
+      hash: md5
+      md5: 2f3feeff1c4238113536053501f346a6
+      size: 81645683
+    - path: src/stages/train_orientation_model.py
+      hash: md5
+      md5: 33c65dd2fe2cdb378174c2f27fc702de
+      size: 17052
+    params:
+      params.yaml:
+        train_orientation.batch_size: 16
+        train_orientation.epochs: 5
+        train_orientation.image_size: 384
+        train_orientation.label_smoothing: 0.1
+        train_orientation.learning_rate: 0.0001
+        train_orientation.min_learning_rate: 1e-06
+        train_orientation.mode: skip
+        train_orientation.num_blocks_to_unfreeze: 2
+        train_orientation.output: models/doc_ori/deep_orientation
+        train_orientation.pretrained: true
+        train_orientation.pretrained_checkpoint: 
+          models/doc_ori/deep_image_orientation_detection/orientation_model_v2_0.9882.pth
+        train_orientation.seed: 42
+        train_orientation.source_dir: data/raw/orientation_eval/sources
+        train_orientation.val_fraction: 0.2
+        train_orientation.weight_decay: 0.001
+        train_orientation.workers: 0
+    outs:
+    - path: models/doc_ori/deep_orientation
+      hash: md5
+      md5: eb6b689a348211209cfb171588b87e79.dir
+      size: 105901
+      nfiles: 5

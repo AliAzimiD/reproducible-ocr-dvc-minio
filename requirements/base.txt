@@ -1,0 +1,7 @@
+# Core OCR preprocessing and DVC pipeline dependencies.
+dvc[s3]>=3.60
+Pillow>=10.0
+PyMuPDF>=1.24
+opencv-python>=4.9
+PyYAML>=6.0
+requests>=2.31

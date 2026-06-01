@@ -1,0 +1,7 @@
+# Optional training stage dependencies adapted from:
+# https://github.com/duartebarbosadev/deep-image-orientation-detection
+-r base.txt
+torch
+torchvision
+tqdm
+tensorboard

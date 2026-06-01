@@ -1,0 +1,2 @@
+# Default local development install.
+-r requirements/dev.txt

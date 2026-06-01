@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.env
+.DS_Store
+
+# DVC outputs and local cache. DVC metadata remains tracked.
+/data/interim/
+/.dvc/cache/
+/.dvc/tmp/

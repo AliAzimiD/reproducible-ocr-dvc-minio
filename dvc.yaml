@@ -1,0 +1,68 @@
+stages:
+  extract_images:
+    cmd: python src/stages/extract_images.py --input ${extract.input} --output ${extract.output}
+    deps:
+      - src/stages/extract_images.py
+      - ${extract.input}
+    params:
+      - extract.input
+      - extract.output
+    outs:
+      - ${extract.output}
+
+  orient_and_rotate:
+    cmd: python src/stages/orient_and_rotate.py --input ${orientation.input} --output ${orientation.output} --model-dir ${orientation.model_dir} --backend ${orientation.backend}
+    deps:
+      - src/stages/orient_and_rotate.py
+      - ${orientation.input}
+    params:
+      - orientation.input
+      - orientation.output
+      - orientation.model_dir
+      - orientation.backend
+    outs:
+      - ${orientation.output}
+
+  train_orientation_model:
+    cmd: >-
+      python src/stages/train_orientation_model.py
+      --mode ${train_orientation.mode}
+      --source-dir ${train_orientation.source_dir}
+      --output ${train_orientation.output}
+      --pretrained-checkpoint ${train_orientation.pretrained_checkpoint}
+      --epochs ${train_orientation.epochs}
+      --batch-size ${train_orientation.batch_size}
+      --learning-rate ${train_orientation.learning_rate}
+      --min-learning-rate ${train_orientation.min_learning_rate}
+      --weight-decay ${train_orientation.weight_decay}
+      --label-smoothing ${train_orientation.label_smoothing}
+      --image-size ${train_orientation.image_size}
+      --workers ${train_orientation.workers}
+      --val-fraction ${train_orientation.val_fraction}
+      --seed ${train_orientation.seed}
+      --num-blocks-to-unfreeze ${train_orientation.num_blocks_to_unfreeze}
+      --pretrained ${train_orientation.pretrained}
+      --allow-missing-torch
+    deps:
+      - src/stages/train_orientation_model.py
+      - ${train_orientation.source_dir}
+      - ${train_orientation.pretrained_checkpoint}
+    params:
+      - train_orientation.mode
+      - train_orientation.source_dir
+      - train_orientation.output
+      - train_orientation.pretrained_checkpoint
+      - train_orientation.epochs
+      - train_orientation.batch_size
+      - train_orientation.learning_rate
+      - train_orientation.min_learning_rate
+      - train_orientation.weight_decay
+      - train_orientation.label_smoothing
+      - train_orientation.image_size
+      - train_orientation.workers
+      - train_orientation.val_fraction
+      - train_orientation.seed
+      - train_orientation.num_blocks_to_unfreeze
+      - train_orientation.pretrained
+    outs:
+      - ${train_orientation.output}
